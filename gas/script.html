@@ -1,1 +1,148 @@
+<script>
 
+let book = "AKAZUKIN00";
+let page = 1;
+let maxPage = 1;
+
+window.onload = function(){
+
+  const params = new URLSearchParams(location.search);
+
+  if(params.get("book")){
+    book = params.get("book");
+  }
+
+  if(params.get("page")){
+    page = Number(params.get("page"));
+  }
+
+  document
+    .getElementById("prevButton")
+    .addEventListener("click",prevPage);
+
+  document
+    .getElementById("nextButton")
+    .addEventListener("click",nextPage);
+
+  loadPage();
+
+};
+
+
+function loadPage(){
+
+  document.getElementById("loading").style.display="block";
+  document.getElementById("error").innerHTML="";
+  document.getElementById("image").style.display="none";
+
+  google.script.run
+
+    .withSuccessHandler(showPage)
+
+    .withFailureHandler(showError)
+
+    .getBookPage(book,page);
+
+}
+
+
+function showPage(data){
+
+  document.getElementById("loading").style.display="none";
+
+  if(!data.success){
+
+    document.getElementById("error").innerHTML="ページがありません";
+
+    return;
+
+  }
+
+  maxPage=data.maxPage;
+
+  document.getElementById("title").innerHTML=data.title;
+
+  document.getElementById("text").innerHTML=data.text;
+
+  const img=document.getElementById("image");
+
+  img.src=data.image;
+
+  img.onload=function(){
+
+    img.style.display="block";
+
+  };
+
+  img.onerror=function(){
+
+    document.getElementById("error").innerHTML="画像が見つかりません";
+
+  };
+
+  const audio=document.getElementById("audio");
+
+  audio.pause();
+
+  audio.src=data.voice;
+
+  audio.load();
+
+  document.getElementById("pageLabel").innerHTML=
+
+    page+" / "+maxPage;
+
+  document.getElementById("prevButton").disabled=
+
+    page<=1;
+
+  document.getElementById("nextButton").disabled=
+
+    page>=maxPage;
+
+  history.replaceState(
+
+    {},
+
+    "",
+
+    "?book="+book+"&page="+page
+
+  );
+
+}
+
+
+function showError(err){
+
+  document.getElementById("loading").style.display="none";
+
+  document.getElementById("error").innerHTML=
+
+    "通信エラー<br>"+err;
+
+}
+
+
+function nextPage(){
+
+  if(page>=maxPage)return;
+
+  page++;
+
+  loadPage();
+
+}
+
+
+function prevPage(){
+
+  if(page<=1)return;
+
+  page--;
+
+  loadPage();
+
+}
+
+</script>
